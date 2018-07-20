@@ -30,7 +30,7 @@ export default {
     return {
       quote: JSON.stringify({
         quote: "With great power comes great responsibility.",
-        by: "Dying Old Man"
+        by: "Dead Old Man"
       }),
       query: "January"
     };
@@ -57,10 +57,6 @@ export default {
 @media screen and (max-width: 1220px) {
   #app {
     grid-template-columns: 1fr;
-  }
-
-  body {
-    overflow-y: visible;
   }
 }
 </style>
