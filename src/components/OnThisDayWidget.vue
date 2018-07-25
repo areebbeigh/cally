@@ -36,7 +36,7 @@ export default {
 
   created: function() {
     eventBus.$on("dateUpdated", selected => {
-      const BASE_URL = "https://numbersapi.com";
+      const BASE_URL = "http://numbersapi.com";
       const RANDOM_YEAR = BASE_URL + "/random/year";
       let dateUrl = BASE_URL + "/" + (selected.month + 1) + "/" + selected.date + "/date";
 
