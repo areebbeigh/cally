@@ -1,13 +1,13 @@
 <template>
-  <div class="left-container" :style="bgImgStyle">
-    <div class="hide-button">&lt;</div>
-    
+  <div v-bind:class="{'wide-screen': wideScreen}" class="left-container" :style="bgImgStyle">
+    <!-- {{wideScreen}} -->
+    <div v-on:click="eventBus.$emit('wideScreenOn')" class="hide-button">&lt;</div>
     <div class="content">
       <div>
         <blockquote>
-          <h1>{{quoteJson.quote}}</h1>
+          <h1>{{quoteJson.body}}</h1>
           <p>
-            <strong>- {{quoteJson.by}} -</strong>
+            <strong>- {{quoteJson.author}} -</strong>
           </p>
         </blockquote>
       </div>
@@ -17,12 +17,31 @@
 </template>
 
 <script>
+import eventBus from "../main";
+
 export default {
   name: "UnsplashPhoto",
 
   props: {
     query: String,
     quote: String
+  },
+
+  created: function() {
+    eventBus.$on("wideScreenOn", () => {
+      this.wideScreen = true;
+    });
+
+    eventBus.$on("wideScreenOff", () => {
+      this.wideScreen = false;
+    });
+  },
+
+  data: function() {
+    return {
+      eventBus,
+      wideScreen: false
+    };
   },
 
   computed: {
@@ -82,6 +101,7 @@ export default {
 }
 
 .hide-button {
+  /* display: none; */
   color: #222;
   font-weight: bold;
   font-size: 1.3em;
@@ -92,9 +112,14 @@ export default {
   border-radius: 2em 0 0 2em;
   cursor: pointer;
   position: absolute;
-  left: 37.5%;
+  top: 1%;
+  left: 37.7%;
   /* bottom: 1%; */
   /* z-index: -1; */
+}
+
+.wide-screen {
+  display: none;
 }
 
 @media screen and (max-width: 1220px) {
@@ -110,6 +135,5 @@ export default {
     top: 10%;
   }
 }
-
 </style>
  

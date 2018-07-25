@@ -4,10 +4,11 @@ import App from './App.vue';
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
 
-Vue.config.productionTip = true
+export default new Vue();
 
-Vue.use(ElementUI)
+Vue.config.productionTip = true;
+Vue.use(ElementUI);
 
 new Vue({
   render: h => h(App)
-}).$mount('#app')
+}).$mount('#app');

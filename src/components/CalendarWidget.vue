@@ -12,7 +12,11 @@
         </div>
       </div>
 
-      <el-select class="cal-selector select-month" v-model="selectedMonth" placeholder="Select">
+      <el-select 
+        class="cal-selector select-month" 
+        v-model="selected.month" 
+        v-on:change="emitDateUpdate()"
+        placeholder="Select">
         <el-option
           v-for="month in months"
           :key="month"
@@ -25,7 +29,7 @@
 
       <el-select 
         class="cal-selector select-year"
-        v-model="selectedYear" 
+        v-model="selected.year" 
         filterable 
         allow-create 
         default-first-option
@@ -60,55 +64,28 @@
         v-bind:key="'date_'+calDate">
         <el-button  
           class="date-button"
-          v-bind:class="{ 'date-button-active': isCurrentDate && calDate == today.getDate(), 
-          'date-button-false': !isCurrentDate && calDate == today.getDate() }">
+          v-on:click="changeSelectedDate(calDate)"
+          v-bind:class="{ 
+            'date-button-active': isCurrentMonthAndYear && calDate == today.getDate(), 
+            'date-button-false': !isCurrentMonthAndYear && calDate == today.getDate(),
+            'date-button-selected': selected.date == calDate 
+            }">
           {{calDate}}
         </el-button>
       </div>
     </div>
-
-      <!-- <div class ="row cols-7 week-days-row date-line">
-        <div class="col"
-          v-for="day in days"
-          v-bind:key="day">
-          <span class="week-day">{{day.slice(0,1)}}</span>
-        </div>
-        
-      </div>
-      <div class="row date-line"
-        v-for="calDates in calendar.dates" 
-        v-bind:key="'dates_'+calDates.join('')">
-      
-        <div class="cols-7">  
-          <div class="col"
-            v-if="calendar.dates.indexOf(calDates) == 0 && calendar.previousDates.length"
-            v-for="prevDate in calendar.previousDates"
-            v-bind:key="'prevDate_'+prevDate">
-            <el-button 
-              disabled
-              class="date-button-previous date-button">
-              {{prevDate}}
-            </el-button>
-          </div>
-
-          <div class="col"
-            v-for="calDate in calDates"
-            v-bind:key="'date_'+calDate">
-            <el-button  
-              class="date-button"
-              v-bind:class="{ 'date-button-active': isCurrentDate && calDate == today.getDate(), 
-              'date-button-false': !isCurrentDate && calDate == today.getDate() }">
-              {{calDate}}
-            </el-button>
-          </div>
-        </div>
-      </div> -->
   </div>
 </template>
 
 <script>
+import eventBus from "../main";
+
 export default {
   name: "CalendarWidget",
+
+  mounted: function() {
+    this.emitDateUpdate();
+  },
 
   data: function() {
     return {
@@ -140,8 +117,11 @@ export default {
         "Saturday"
       ],
 
-      selectedMonth: new Date().getMonth(),
-      selectedYear: new Date().getFullYear()
+      selected: {
+        date: new Date().getDate(),
+        month: new Date().getMonth(),
+        year: new Date().getFullYear()
+      }
     };
   },
 
@@ -150,21 +130,21 @@ export default {
       return new Date();
     },
 
-    isCurrentDate: function() {
+    isCurrentMonthAndYear: function() {
       return (
-        this.selectedYear == this.today.getFullYear() &&
-        this.selectedMonth == this.today.getMonth()
+        this.selected.year == this.today.getFullYear() &&
+        this.selected.month == this.today.getMonth()
       );
     },
 
     selectableYears: function() {
       const lowerLimit = 1200;
-      let possibleStart = this.selectedYear - 50;
+      let possibleStart = this.selected.year - 50;
       let possibleEnd = this.today.getFullYear() + 50;
 
       let start = possibleStart > lowerLimit ? possibleStart : lowerLimit;
       let end =
-        possibleEnd > this.selectedYear ? possibleEnd : this.selectedYear + 50;
+        possibleEnd > this.selected.year ? possibleEnd : this.selected.year + 50;
 
       return new Array(end - start + 1)
         .fill()
@@ -172,8 +152,8 @@ export default {
     },
 
     calendar: function() {
-      let year = this.selectedYear;
-      let month = this.selectedMonth;
+      let year = this.selected.year;
+      let month = this.selected.month;
 
       let cal = {
         year,
@@ -185,7 +165,6 @@ export default {
         dates: []
       };
 
-      let dateLine = [];
       for (let date = 1; date <= cal.numberOfDays; date++) {
         if (date == 1) {
           if (cal.startDay) {
@@ -204,17 +183,6 @@ export default {
         }
 
         cal.dates.push(date);
-
-        // if (
-        //   dateLine.length == 7 ||
-        //   date == cal.numberOfDays ||
-        //   (!cal.dates.length && dateLine.length == 7 - cal.startDay)
-        // ) {
-        //   cal.dates.push(Object.assign([], dateLine));
-        //   dateLine = [];
-        // }
-
-        // console.log(cal.dates, dateLine)
       }
 
       return cal;
@@ -222,15 +190,9 @@ export default {
   },
 
   methods: {
-    // yearUp: function() {
-    //   let date = new Date();
-    //   date.setFullYear(this.date.getFullYear() + 1);
-    //   this.date = date;
-    // },
-
-    // getDay: function() {
-    //   return this.date.getDay();
-    // },
+    emitDateUpdate: function() {
+      eventBus.$emit("dateUpdated", Object.assign({}, this.selected));
+    },
 
     getDaysInMonth: function(year, month) {
       // Month is 0 based. Third parameter is date (1 based).
@@ -238,18 +200,31 @@ export default {
       return new Date(year, month + 1, 0).getDate();
     },
 
+    changeSelectedDate: function(date) {
+      this.selected.date = date;
+      this.emitDateUpdate();
+    },
+
     goToToday: function() {
-      this.selectedMonth = this.date.getMonth();
-      this.selectedYear = this.date.getFullYear();
+      this.selected.month = this.date.getMonth();
+      this.selected.year = this.date.getFullYear();
+      this.selected.date = this.date.getDate();
+      this.emitDateUpdate();
     }
-  }
+  },
+
+  // watch: {
+  //   selected: function(val) {
+  //     this.emitDateUpdate();
+  //   }
+  // }
 };
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.calendar { 
-  width: 60%;
+.calendar {
+  width: 100%;
   /* border: 1px solid #000; */
 }
 
@@ -331,6 +306,16 @@ export default {
   width: 100%;
 }
 
+.date-button:focus {
+  background: #4db6ac;
+  color: #fff;
+}
+
+.date-button-selected {
+  background: #4db6ac;
+  color: #fff;
+}
+
 .date-button-active {
   background: #009688;
   color: white;
@@ -349,7 +334,7 @@ export default {
   .calendar {
     width: 100%;
   }
-  
+
   .date-button {
     min-width: 5px;
   }
